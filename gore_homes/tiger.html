@@ -15,7 +15,7 @@
 	<body>
 
 		<div id="container"></div>
-		<h3 id="info"></h3>
+		<h1 id="info"></h1>
 
 		<!-- Import maps polyfill -->
 		<!-- Remove this when import maps will be widely supported -->
@@ -38,6 +38,7 @@
 			import { SVGLoader } from './scripts/SVGLoader.js';
 
 			let controls, raycaster, renderer, scene, selectedHouseId, stats, camera, gui, guiData;
+			let selectedMeshes = [];
 			const infoEl = document.getElementById('info');
 			const pointer = new THREE.Vector2();
 
@@ -267,6 +268,37 @@
 
 				onPointerMove(event);
 
+				setTimeout(() => {
+					if (selectedHouseId) {
+						const result = [];
+						scene.traverse((child) => {
+							if (child.houseId === selectedHouseId && child.type === "Mesh") {
+								result.push(child);
+							}
+						});
+						console.log(result);
+						selectedMeshes.forEach(mesh => {
+							mesh.material.color = new THREE.Color(mesh.material.initialColor);
+							mesh.material.needsUpdate = true;
+						});
+						
+						result.forEach(mesh => {
+							mesh.material.initialColor = mesh.material.color.getHex();
+							mesh.material.color = new THREE.Color('#fd4b07');
+							mesh.material.needsUpdate = true;
+						});
+
+						selectedMeshes = result;
+						infoEl.innerHTML =`SELECTED - ${selectedHouseId.split('_')[0]}`;
+					} else {
+						selectedMeshes.forEach(mesh => {
+							mesh.material.color = new THREE.Color(mesh.material.initialColor);
+							mesh.material.needsUpdate = true;
+						});
+						nfoEl.innerHTML = '';
+					}
+				}, 100)
+
 			}
 
 			function onWindowResize() {
@@ -289,8 +321,6 @@
 				isRaycasted();
 
 				renderer.render( scene, camera );
-
-				infoEl.innerHTML = selectedHouseId ? `SELECTED - ${selectedHouseId}` : '';
 
 			}
 
