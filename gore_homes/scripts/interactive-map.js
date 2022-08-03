@@ -436,9 +436,9 @@ InteractiveMap.container.onload = function(content) {
     this.element.appendChild(content);
     this.parseData();
 
-    if (!this.detectMob()) {
+//     if (!this.detectMob()) {
         this.element.classList.add('interactive-map-animated')
-    }
+//     }
 
 
     // Listen user interactions
