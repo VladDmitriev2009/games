@@ -316,15 +316,8 @@ InteractiveMap.container = {
 
                 this.scale = this.scale > this.maxScale ? this.maxScale : this.scale;
                 this.scale = this.scale < 1 ? 1 : this.scale;
-                
-                                ///
-               var xs = (this.pointers[0].clientX - this.pointX) / this.scale;
-               var ys = (this.pointers[0].clientY - this.pointY) / this.scale;
-                ///
-                this.pointX = this.pointers[0].clientX - xs * this.scale;
-                this.pointY = this.pointers[0].clientY - ys * this.scale;
-  
-                this.transform();
+               
+                this.setTransform();
             }
 
             // Cache the distance for the next move event 
