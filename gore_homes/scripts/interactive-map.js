@@ -304,10 +304,10 @@ InteractiveMap.container = {
             if (this.prevPinchDiff >= 0) {
                 if (diff > this.prevPinchDiff) {
                     // The distance between the two pointers has increased
-                    this.scale++;
+                    this.scale+=0.05;
                 } else if (diff < this.prevPinchDiff) {
                     // The distance between the two pointers has decreased
-                    this.scale--;
+                    this.scale-=0.05;
                 }
 
                 this.scale = this.scale > this.maxScale ? this.maxScale : this.scale;
