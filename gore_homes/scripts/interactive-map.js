@@ -256,7 +256,7 @@ InteractiveMap.container = {
     onPointerUp: function ( event ) {
         this.removePointer( event );
 
-        if ( this.pointers.length === 0 ) {
+       // if ( this.pointers.length === 0 ) {
 
             this.prevPinchDiff = 0;
             this.element.releasePointerCapture( event.pointerId );
@@ -264,7 +264,7 @@ InteractiveMap.container = {
             this.element.removeEventListener( 'pointermove', this.pointerMoveHandler );
             this.element.removeEventListener( 'pointerup', this.pointerUpHandler );
 
-        }
+        // }
 
     },
 
@@ -304,10 +304,10 @@ InteractiveMap.container = {
             if (this.prevPinchDiff >= 0) {
                 if (diff > this.prevPinchDiff) {
                     // The distance between the two pointers has increased
-                    this.scale += 0.001;
+                    this.scale += 0.01;
                 } else if (diff < this.prevPinchDiff) {
                     // The distance between the two pointers has decreased
-                    this.scale -= 0.001;
+                    this.scale -= 0.01;
                 }
 
                 this.scale = this.scale > this.maxScale ? this.maxScale : this.scale;
