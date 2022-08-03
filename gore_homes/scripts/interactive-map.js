@@ -254,7 +254,8 @@ InteractiveMap.container = {
     },
 
     onPointerUp: function ( event ) {
-        this.removePointer( event );
+//         this.removePointer( event );
+        this.pointers = [];
 
        // if ( this.pointers.length === 0 ) {
 
@@ -282,8 +283,10 @@ InteractiveMap.container = {
 
     onTouchMove: function ( event ) {
 
+        console.log('update pointers:', this.pointers.length)
         // Find this event in the cache and update its record with this event
         for (var i = 0; i < this.pointers.length; i++) {
+            console.log(i, this.pointers[i].pointerId, event.pointerId == this.pointers[i].pointerId );
             if (event.pointerId == this.pointers[i].pointerId) {
                 this.pointers[i] = event;
             break;
@@ -295,7 +298,7 @@ InteractiveMap.container = {
             this.onMouseMove(event);
 
         // If two pointers are down, check for pinch gestures
-        } else if (this.pointers.length === 2) {
+        } else {
             // Calculate the distance between the two pointers
             var diff = Math.abs(this.pointers[0].clientX - this.pointers[1].clientX);
 
@@ -307,7 +310,7 @@ InteractiveMap.container = {
                     this.scale += 0.03;
                 } else if (diff < this.prevPinchDiff) {
                     // The distance between the two pointers has decreased
-                    this.scale -= 0.03;
+                    this.scale -= 0.1;
                 }
 
 
