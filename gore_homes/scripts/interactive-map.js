@@ -110,6 +110,8 @@ InteractiveMap.container = {
         this.element.addEventListener( 'pointerdown', this.onPointerDown.bind(this) );
         this.element.addEventListener( 'pointercancel', this.onPointerCancel.bind(this) );
         this.element.addEventListener( 'wheel', this.onMouseWheel.bind(this), { passive: false } );
+        this.element.addEventListener( 'dblclick', this.onDblClick );
+        
 
         this.element.style.touchAction = 'none'; // disable touch scroll
 
@@ -150,6 +152,12 @@ InteractiveMap.container = {
     *
     */
     onload: null,
+    
+    onDblClick: function() {
+            var scale = this.scale * 3;
+            this.scale = scale > this.maxScale ? this.maxScale : scale;
+            this.setTransform();
+    },
 
     onMouseDown: function ( event ) {
 
@@ -436,9 +444,9 @@ InteractiveMap.container.onload = function(content) {
     this.element.appendChild(content);
     this.parseData();
 
-//     if (!this.detectMob()) {
+    if (!this.detectMob()) {
         this.element.classList.add('interactive-map-animated')
-//     }
+    }
 
 
     // Listen user interactions
