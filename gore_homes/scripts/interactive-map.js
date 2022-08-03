@@ -12,7 +12,7 @@ var InteractiveMap = InteractiveMap || {};
 */
 InteractiveMap.container = {
 
-    assetsURL: '/assets/',
+    assetsURL: '/gore_homes/assets/',
 
     element: null,  // Container Element ref
 
