@@ -353,6 +353,9 @@ InteractiveMap.container = {
     onMouseWheel: function ( event ) {
 
         event.preventDefault();
+        
+        console.log(event.wheelDelta, event);
+
 
         if (this.disabled) return;
 
