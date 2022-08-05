@@ -273,7 +273,7 @@ InteractiveMap.container = {
     
     normalizeWheelSpeed: function (event) {
         var normalized;
-        if (event.wheelDelta) {
+        if (event.wheelDelta !== undefined) {
             
             console.log(event.wheelDelta, event.wheelDelta % 120 - 0, (event.wheelDelta % 120 - 0) == -0)
             normalized = (event.wheelDelta % 120 - 0) == -0 ? event.wheelDelta / 120 : event.wheelDelta / 200;
