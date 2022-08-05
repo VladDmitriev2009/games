@@ -10,11 +10,20 @@ var InteractiveMap = InteractiveMap || {};
 * @namespace InteractiveMap
 * @class InteractiveMap
 */
+
+InteractiveMap.LOCALHOST_URL = 'http://gore-homes';
+InteractiveMap.DEV_SERVER_URL = 'https://040acc5.netsolhost.com/';
+
 InteractiveMap.container = {
 
     assetsURL: '/games/gore_homes/assets/',
 
-    element: null,  // Container Element ref
+    isDev: location.origin === InteractiveMap.LOCALHOST_URL,
+    isProd: !location.origin === InteractiveMap.LOCALHOST_URL && location.origin !== InteractiveMap.DEV_SERVER_URL,
+
+    data: [],               // Houses info from Admin panel
+    element: null,          // Container Element ref
+    selectedHouseElement: null,
 
     blocksCollection: null, // Array<Elements>
     housesCache: {},        // Record<houseId, Element>
@@ -35,6 +44,9 @@ InteractiveMap.container = {
     pointerMoveHandler: null,
     pointerUpHandler: null,
 
+    iconSoldOut: document.createElementNS("http://www.w3.org/2000/svg", 'image'),
+    iconReserved: document.createElementNS("http://www.w3.org/2000/svg", 'image'),
+
     /**
     * At mobile can be multi touches
     *
@@ -46,6 +58,72 @@ InteractiveMap.container = {
 
         this.pointers.push( event );
 
+    },
+
+    activate: function(houseEl) {
+
+        var data = this.data.find(h => ('id' + h.lot_number) === houseEl.id);
+
+        // 1 : AVAILABLE
+        // 2 : RESERVED
+        // 0 : SOLD OUT
+
+        if (!data) {
+            houseEl.style.opacity = 0.2;
+        } else if (data.status_hose === '1') {
+
+            data.element = houseEl;
+            data.id = houseEl.id;
+            data.status = houseEl.status = 'AVAILABLE';
+            houseEl.addEventListener('click', this.onHouseClick.bind(this), false);
+
+        } else if (data.status_hose === '2') {
+
+            data.element = houseEl;
+            data.id = houseEl.id;
+            data.status = houseEl.status = 'RESERVED';
+            houseEl.addEventListener('click', this.onTooltipClick(this.iconReserved).bind(this), false);
+
+            this.fillHouse(houseEl, '#A7A7A7');
+
+        } else if (data.status_hose === '0') {
+
+            data.element = houseEl;
+            data.id = houseEl.id;
+            data.status = houseEl.status = 'SOLD OUT';
+            houseEl.addEventListener('click', this.onTooltipClick(this.iconSoldOut).bind(this), false);
+
+            this.applySoldOutStyle(houseEl);
+        }
+    },
+
+    /**
+    * Sold_Out house should have cross icon and orange color
+    *
+    * @method applySoldOutStyle
+    * @param {Element} houseEl SVG group
+    *
+    */
+     applySoldOutStyle: function (houseEl) {
+
+        var group = houseEl.querySelector('[id^="Group "]');
+        if (group) {
+            var icon = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+            var bbox = group.getBBox();
+            var cx = bbox.x + bbox.width / 2 - 4;   // image.width / 2
+            var cy = bbox.y + bbox.height / 2 - 4;
+
+            icon.setAttribute('href', window.location.origin + this.assetsURL + 'sold_out_cross.svg');
+            icon.setAttribute('class', 'no-user-interaction');
+            icon.setAttributeNS(null, 'transform', 'translate('+ cx +','+ cy +')');
+
+            houseEl.appendChild(icon);
+
+        } else {
+            this.log('Add Cross icon failed.')
+        }
+
+        this.fillHouse(houseEl, '#FF6230');
     },
 
     /**
@@ -61,7 +139,7 @@ InteractiveMap.container = {
     },
 
     detectMob: function() {
-        const toMatch = [
+        var toMatch = [
             /Android/i,
             /webOS/i,
             /iPhone/i,
@@ -81,20 +159,58 @@ InteractiveMap.container = {
     },
 
     /**
-    * Find container by ID
+    * Change color for not active House
     *
-    * @method init
-    * @param {String} id Container ID
-    * @param {String} version File name
+    * @method fillHouse
+    * @param {SVGElement} house
     *
     */
-    init: function (id, version) {
-        var container = document.getElementById(id);
+    fillHouse: function(house, hexColor) {
+        var paths = house.querySelectorAll("[id^='Group '] > path");
+        for (var i = 0; i < paths.length; i++) {
+            paths[i].setAttribute("fill", hexColor);
+        }
+    },
+
+    /**
+    * Find container by ID
+    * Get project by ID
+    * Download SVG image map
+    *
+    * @method init
+    * @param {String} id HTMLElement ID
+    * @param {String} projectId Current user's project ID
+    *
+    */
+    init: function (elementId, projectId) {
+
+        var baseURL = this.isDev ? InteractiveMap.DEV_SERVER_URL : '/';       // Proxy to the dev server
+
+        var container = document.getElementById(elementId);
+        var scope = this;
         if (container) {
             this.element = container;
-            this.load(version, container);
+
+            fetch(baseURL + 'wp-json/wp/v2/posts/' + projectId)
+                .then(function(response) { return response.json();})
+                .then(function(data) {
+
+                    // Phases
+                    // 1 : ACTIVE
+                    // 0 : NOT ACTIVE
+                    data.acf.phase_group
+                        .filter(phase => phase.statuses_phase === '1')
+                        .forEach(houses => houses.group_houses_phase.forEach(group => {
+                            scope.data = scope.data.concat(group.houses_group.map(d => d.house));
+                        }));
+
+                    scope.log(scope.data);
+
+                    scope.load('projectId_' + projectId, container);
+                });
+
         } else {
-            console.error(id + ' not found');
+            console.error(elementId + ' not found');
         }
     },
 
@@ -107,11 +223,10 @@ InteractiveMap.container = {
     */
     initListeners: function() {
 
-        this.element.addEventListener( 'pointerdown', this.onPointerDown.bind(this) );
+        this.element.addEventListener( 'pointerdown', this.onPointerDown.bind(this), false );
         this.element.addEventListener( 'pointercancel', this.onPointerCancel.bind(this) );
         this.element.addEventListener( 'wheel', this.onMouseWheel.bind(this), { passive: false } );
-        this.element.addEventListener( 'dblclick', this.onDblClick );
-        
+        // this.element.addEventListener( 'dblclick', this.onDblClick.bind(this) );
 
         this.element.style.touchAction = 'none'; // disable touch scroll
 
@@ -126,10 +241,10 @@ InteractiveMap.container = {
     */
     load: function(version) {
         var fileName = version + ".svg";
-        var path = window.location.origin + this.assetsURL + fileName;
+        var path = window.location.origin + this.assetsURL;
         var scope = this;
         xhr = new XMLHttpRequest();
-        xhr.open("GET", path, false);
+        xhr.open("GET", path + fileName, false);
         // Following line is just to be on the safe side;
         // not needed if your server delivers SVG with correct MIME type
         xhr.overrideMimeType("image/svg+xml");
@@ -143,7 +258,18 @@ InteractiveMap.container = {
             }
         };
         xhr.send("");
+
+        // Init two Tooltips
+        this.iconReserved.setAttribute('href', path + 'sold_out.svg');
+        this.iconSoldOut.setAttribute('href', path + 'reserved.svg');
+        this.iconReserved.setAttribute('class', 'map-tooltip no-user-interaction');
+        this.iconSoldOut.setAttribute('class', 'map-tooltip no-user-interaction');
+
     },
+
+    log: (function() {
+        return this.isProd ? function() {} : console.log;
+    })(),
 
     /**
     * Load SVG image handler
@@ -152,11 +278,57 @@ InteractiveMap.container = {
     *
     */
     onload: null,
-    
-    onDblClick: function() {
-            var scale = this.scale * 3;
-            this.scale = scale > this.maxScale ? this.maxScale : scale;
-            this.setTransform();
+
+    /**
+    * House select event handler
+    *
+    * @method onselect
+    * @param {Object} House Selected Lot
+    *
+    */
+    onselect: null,
+
+    // onDblClick: function(event) {
+
+    //     event.wheelDelta = 1;
+    //     event.dblClickSpeed = this.speed * 2;
+
+    //     this.onMouseWheel(event);
+    // },
+
+    onHouseClick: function(event) {
+        var id = event.currentTarget.id;
+        var house = this.data.find(house => house.id === id);
+
+        if (house === this.selectedHouseElement) {
+            return;
+        }
+
+        // remove previous animation
+        if (this.selectedHouseElement) {
+            this.selectedHouseElement.element.classList.remove('selected-lot');
+        }
+
+        this.selectedHouseElement = house;
+        this.selectedHouseElement.element.classList.add('selected-lot');
+
+        if (this.onselect) {
+            this.onselect(this.selectedHouseElement);
+        }
+    },
+
+    onTooltipClick: function (icon) {
+        return function (event) {
+            icon.classList.remove('fade');
+            var bbox = event.currentTarget.getBBox();
+            var tfmList = icon.transform.baseVal;
+            var svgroot = icon.parentNode;
+            var translate = svgroot.createSVGTransform();
+            translate.setTranslate(bbox.x - 35 + bbox.width / 2, bbox.y - bbox.height * 1.25 );
+            tfmList.clear();
+            tfmList.appendItem(translate);
+            icon.classList.add('fade');
+        }
     },
 
     onMouseDown: function ( event ) {
@@ -189,7 +361,7 @@ InteractiveMap.container = {
         var delta = (event.wheelDelta ? event.wheelDelta : -event.deltaY);
 
         if (delta > 0) {
-            this.scale *= this.speed;
+            this.scale *= event.dblClickSpeed || this.speed;
         } else {
             this.scale /= this.speed;
         }
@@ -215,7 +387,7 @@ InteractiveMap.container = {
 
         // fix some how not all point leave events fire and stop working
         if (this.pointers.length >= 2) {
-            this.pointers = [];
+            this.removePointer();
             this.pointerUpHandler(event);
         }
 
@@ -224,9 +396,10 @@ InteractiveMap.container = {
             this.pointerMoveHandler = this.onPointerMove.bind(this);
             this.pointerUpHandler = this.onPointerUp.bind(this);
 
-            this.element.setPointerCapture( event.pointerId );
+            // this.element.setPointerCapture( event.pointerId );
             this.element.addEventListener( 'pointermove', this.pointerMoveHandler );
             this.element.addEventListener( 'pointerup', this.pointerUpHandler );
+            this.element.addEventListener( 'pointerleave', this.pointerUpHandler );
 
         }
 
@@ -262,19 +435,15 @@ InteractiveMap.container = {
     },
 
     onPointerUp: function ( event ) {
-//         this.removePointer( event );
-        this.pointers = [];
 
-       // if ( this.pointers.length === 0 ) {
+        this.removePointer( event );
 
-            this.prevPinchDiff = 0;
-            this.element.releasePointerCapture( event.pointerId );
+        this.prevPinchDiff = 0;
+        // this.element.releasePointerCapture( event.pointerId );
 
-            this.element.removeEventListener( 'pointermove', this.pointerMoveHandler );
-            this.element.removeEventListener( 'pointerup', this.pointerUpHandler );
-
-        // }
-
+        this.element.removeEventListener( 'pointermove', this.pointerMoveHandler );
+        this.element.removeEventListener( 'pointerup', this.pointerUpHandler );
+        this.element.removeEventListener( 'pointerleave', this.pointerUpHandler );
     },
 
     onTouchStart: function ( event ) {
@@ -291,10 +460,8 @@ InteractiveMap.container = {
 
     onTouchMove: function ( event ) {
 
-        console.log('update pointers:', this.pointers.length)
         // Find this event in the cache and update its record with this event
         for (var i = 0; i < this.pointers.length; i++) {
-            console.log(i, this.pointers[i].pointerId, event.pointerId == this.pointers[i].pointerId );
             if (event.pointerId == this.pointers[i].pointerId) {
                 this.pointers[i] = event;
             break;
@@ -310,21 +477,20 @@ InteractiveMap.container = {
             // Calculate the distance between the two pointers
             var diff = Math.abs(this.pointers[0].clientX - this.pointers[1].clientX);
 
-            console.log(diff, this.prevPinchDiff);
-
             if (this.prevPinchDiff > 0) {
+                var zoomSpeed = 0.02;
                 if (diff > this.prevPinchDiff) {
                     // The distance between the two pointers has increased
-                    this.scale += 0.03;
+                    this.scale += zoomSpeed;
                 } else if (diff < this.prevPinchDiff) {
                     // The distance between the two pointers has decreased
-                    this.scale -= 0.1;
+                    // Make ZoomOut few times quickly
+                    this.scale -= zoomSpeed * 4;
                 }
-
 
                 this.scale = this.scale > this.maxScale ? this.maxScale : this.scale;
                 this.scale = this.scale < 1 ? 1 : this.scale;
-               
+
                 this.setTransform();
             }
 
@@ -348,15 +514,15 @@ InteractiveMap.container = {
                 var house = block.children[j];
                 var houseId = house.getAttribute('id');
                 if (houseId.startsWith('id')) {
-                    house.blockId = blockId;
                     this.housesCache[houseId] = house;
+                    this.activate(house);
                 }
             }
         }
 
-        console.log('Blocks found:', this.blocksCollection.length);
-        console.log('Houses found:', Object.keys(this.housesCache).length);
-        console.log('Houses found:', this.housesCache);
+        this.log('Blocks found:', this.blocksCollection.length);
+        this.log('Houses found:', Object.keys(this.housesCache).length);
+        this.log('Houses found:', this.housesCache);
     },
 
     /**
@@ -367,16 +533,7 @@ InteractiveMap.container = {
     */
      removePointer: function ( event ) {
 
-        for ( let i = 0; i < this.pointers.length; i ++ ) {
-
-            if ( this.pointers[ i ].pointerId == event.pointerId ) {
-
-                this.pointers.splice( i, 1 );
-                return;
-
-            }
-
-        }
+        this.pointers = [];
 
     },
 
@@ -409,7 +566,7 @@ InteractiveMap.container = {
     /**
     * Zoom and scroll map
     *
-    * @method setTransform
+    * @method transform
     *
     */
     transform: function () {
@@ -418,24 +575,24 @@ InteractiveMap.container = {
         var rect = this.element.firstChild.getBoundingClientRect();
 
         // fix scroll outside container: RIGHT side
-        var minLeft = -1 * (rect.width - rectParent.width);
+        var minLeft = -1 * (rectParent.width * this.scale - rectParent.width);
         this.pointX = this.pointX < minLeft ? minLeft : this.pointX;
 
-        // fix scroll outside container: BOTTOM side
-        var minTop = -1 * (rect.height - rectParent.height);
+        // // fix scroll outside container: BOTTOM side
+        var minTop = -1 * (rect.height * (this.detectMob() ? 1 : this.scale) - rectParent.height);
         this.pointY = this.pointY < minTop ? minTop : this.pointY;
 
         // fix scroll outside container: TOP-RIGHT corner
         this.pointX = this.pointX > 0 ? 0 : this.pointX;
         this.pointY = this.pointY > 0 ? 0 : this.pointY;
 
-        // console.log("translate(" + this.pointX + "px, " + this.pointY + "px) this.scale(" + this.scale + ")");
+        // this.log("translate(" + this.pointX + "px, " + this.pointY + "px) this.scale(" + this.scale + ")");
         this.element.style.transform = "translate(" + this.pointX + "px, " + this.pointY + "px) scale(" + this.scale + ")";
     }
 };
 
 InteractiveMap.container.onload = function(content) {
-    console.log('SVG Loaded!');
+    this.log('SVG Loaded!');
 
     // remove preloader
     this.hidePreloader();
@@ -445,11 +602,19 @@ InteractiveMap.container.onload = function(content) {
     this.parseData();
 
     if (!this.detectMob()) {
-        this.element.classList.add('interactive-map-animated')
+        this.element.classList.add('interactive-map-animated');
     }
-
 
     // Listen user interactions
     this.initListeners();
+
+    // add few images for the Tooltips
+    this.element.firstChild.appendChild(this.iconReserved);
+    this.element.firstChild.appendChild(this.iconSoldOut);
 }
-InteractiveMap.container.init('interactive-map', 'v0.0.1');
+
+
+// FIXME real value from "user.projectId"
+var projectId = 265;
+
+InteractiveMap.container.init('interactive-map', projectId);
