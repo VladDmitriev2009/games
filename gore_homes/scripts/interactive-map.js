@@ -616,6 +616,8 @@ InteractiveMap.container.onload = function(content) {
     this.element.appendChild(content);
     this.parseData();
 
+    console.log('!!! window.chrome', window.chrome)
+    console.log(navigator.vendor);
     if (window.chrome) {
         this.element.classList.add('interactive-map-animated');
     }
