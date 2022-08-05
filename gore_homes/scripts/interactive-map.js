@@ -491,20 +491,15 @@ InteractiveMap.container = {
             console.log(diff);
 
             if (this.prevPinchDiff > 0) {
-                var zoomSpeed = 0.02;
                 if (diff > this.prevPinchDiff) {
                     // The distance between the two pointers has increased
-                    this.scale += zoomSpeed;
+                    event.wheelDelta = 120;
                 } else if (diff < this.prevPinchDiff) {
                     // The distance between the two pointers has decreased
-                    // Make ZoomOut few times quickly
-                    this.scale -= zoomSpeed * 4;
+                    event.wheelDelta = -120;
                 }
-
-                this.scale = this.scale > this.maxScale ? this.maxScale : this.scale;
-                this.scale = this.scale < 1 ? 1 : this.scale;
-
-                this.setTransform();
+                this.onMouseWheel(event);
+                
             }
 
             // Cache the distance for the next move event 
