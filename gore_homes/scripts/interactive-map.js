@@ -184,7 +184,7 @@ InteractiveMap.container = {
     */
     init: function (elementId, projectId) {
 
-        var baseURL = this.isDev ? InteractiveMap.DEV_SERVER_URL : '/';       // Proxy to the dev server
+        var baseURL = InteractiveMap.DEV_SERVER_URL;       // Proxy to the dev server
 
         var container = document.getElementById(elementId);
         var scope = this;
