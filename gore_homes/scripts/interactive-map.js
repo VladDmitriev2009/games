@@ -488,17 +488,18 @@ InteractiveMap.container = {
             // Calculate the distance between the two pointers
             var diff = Math.abs(this.pointers[0].clientX - this.pointers[1].clientX);
             
-            console.log(diff);
-
             if (this.prevPinchDiff > 0) {
                 if (diff > this.prevPinchDiff) {
                     // The distance between the two pointers has increased
-                    event.wheelDelta = 120;
+                    this.pointers[0].wheelDelta = 120;
                 } else if (diff < this.prevPinchDiff) {
                     // The distance between the two pointers has decreased
-                    event.wheelDelta = -120;
+                    this.pointers[0].wheelDelta = -120;
                 }
-                this.onMouseWheel(event);
+                
+                            console.log(this.pointers[0].wheelDelta, this.pointers[0]);
+                
+                this.onMouseWheel(this.pointers[0]);
                 
             }
 
