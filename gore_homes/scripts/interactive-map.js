@@ -491,10 +491,10 @@ InteractiveMap.container = {
             if (this.prevPinchDiff > 0) {
                 if (diff > this.prevPinchDiff) {
                     // The distance between the two pointers has increased
-                    this.pointers[0].wheelDelta = 120;
+                    this.pointers[0].wheelDelta = 1;
                 } else if (diff < this.prevPinchDiff) {
                     // The distance between the two pointers has decreased
-                    this.pointers[0].wheelDelta = -120;
+                    this.pointers[0].wheelDelta = -1;
                 }
                 
                             console.log(this.pointers[0].wheelDelta, this.pointers[0]);
