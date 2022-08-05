@@ -563,7 +563,7 @@ InteractiveMap.container = {
 //             scope.transform.call(scope);
 //         }, 10);
         
-        this.transform.call(scope);
+        this.transform();
 
     },
 
