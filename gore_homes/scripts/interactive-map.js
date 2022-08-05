@@ -373,7 +373,7 @@ InteractiveMap.container = {
         var ys = (event.clientY - this.pointY) / this.scale;
         var delta = this.normalizeWheelSpeed(event);
 
-        console.log(delta);
+        console.log('normalized', delta);
 
         this.scale += delta
 
