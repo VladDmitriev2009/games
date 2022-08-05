@@ -270,6 +270,17 @@ InteractiveMap.container = {
     log: (function() {
         return this.isProd ? function() {} : console.log;
     })(),
+    
+    normalizeWheelSpeed: function (event) {
+        var normalized;
+        if (event.wheelDelta) {
+            normalized = (event.wheelDelta % 120 - 0) == -0 ? event.wheelDelta / 120 : event.wheelDelta / 12;
+        } else {
+            var rawAmmount = event.deltaY ? event.deltaY : event.detail;
+            normalized = -(rawAmmount % 3 ? rawAmmount * 10 : rawAmmount / 3);
+        }
+        return normalized;
+    },
 
     /**
     * Load SVG image handler
@@ -361,13 +372,11 @@ InteractiveMap.container = {
 
         var xs = (event.clientX - this.pointX) / this.scale;
         var ys = (event.clientY - this.pointY) / this.scale;
-        var delta = (event.wheelDelta ? event.wheelDelta : -event.deltaY);
+        var delta = this.normalizeWheelSpeed(event);
 
-        if (delta > 0) {
-            this.scale *= event.dblClickSpeed || this.speed;
-        } else {
-            this.scale /= this.speed;
-        }
+        console.log(delta);
+
+        this.scale += delta
 
         // set Scale limits
         this.scale = this.scale > this.maxScale ? this.maxScale : this.scale;
