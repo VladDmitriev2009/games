@@ -490,7 +490,7 @@ InteractiveMap.container = {
             
             if (this.prevPinchDiff > 0) {
                 
-                this.pointers[0].wheelDelta = diff > this.prevPinchDiff ? 5 : -5;
+                this.pointers[0].wheelDelta = diff > this.prevPinchDiff ? 10 : -25;
                 
                 console.log('fake wheel', this.pointers[0].wheelDelta);
                 
