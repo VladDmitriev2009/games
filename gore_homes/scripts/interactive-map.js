@@ -476,6 +476,8 @@ InteractiveMap.container = {
         } else {
             // Calculate the distance between the two pointers
             var diff = Math.abs(this.pointers[0].clientX - this.pointers[1].clientX);
+            
+            console.log(diff);
 
             if (this.prevPinchDiff > 0) {
                 var zoomSpeed = 0.02;
@@ -548,18 +550,20 @@ InteractiveMap.container = {
     updateTotal: 0,
     setTransform: function () {
 
-        var scope = this;
-        this.updateTotal++;
+//         var scope = this;
+//         this.updateTotal++;
 
-        if (this.updateTotal > 20) {
-            this.updateTotal = 0;
-        } else {
-            clearTimeout(this.timer);
-        }
+//         if (this.updateTotal > 20) {
+//             this.updateTotal = 0;
+//         } else {
+//             clearTimeout(this.timer);
+//         }
 
-        this.timer = setTimeout(function() {
-            scope.transform.call(scope);
-        }, 10);
+//         this.timer = setTimeout(function() {
+//             scope.transform.call(scope);
+//         }, 10);
+        
+        scope.transform.call(scope);
 
     },
 
@@ -586,7 +590,7 @@ InteractiveMap.container = {
         this.pointX = this.pointX > 0 ? 0 : this.pointX;
         this.pointY = this.pointY > 0 ? 0 : this.pointY;
 
-        // this.log("translate(" + this.pointX + "px, " + this.pointY + "px) this.scale(" + this.scale + ")");
+        this.log("translate(" + this.pointX + "px, " + this.pointY + "px) this.scale(" + this.scale + ")");
         this.element.style.transform = "translate(" + this.pointX + "px, " + this.pointY + "px) scale(" + this.scale + ")";
     }
 };
