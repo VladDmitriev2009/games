@@ -491,13 +491,13 @@ InteractiveMap.container = {
             if (this.prevPinchDiff > 0) {
                 if (diff > this.prevPinchDiff) {
                     // The distance between the two pointers has increased
-                    this.pointers[0].wheelDelta = 0.1;
+                    this.pointers[0].wheelDelta = 0.5;
                 } else if (diff < this.prevPinchDiff) {
                     // The distance between the two pointers has decreased
-                    this.pointers[0].wheelDelta = -0.1;
+                    this.pointers[0].wheelDelta = -0.5;
                 }
                 
-                            console.log(this.pointers[0].wheelDelta, this.pointers[0]);
+                            console.log('fake wheel', this.pointers[0].wheelDelta);
                 
                 this.onMouseWheel(this.pointers[0]);
                 
