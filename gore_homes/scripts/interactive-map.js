@@ -277,7 +277,7 @@ InteractiveMap.container = {
             
             console.log(event.wheelDelta, event.wheelDelta % 120 - 0, (event.wheelDelta % 120 - 0) == -0)
             normalized = (event.wheelDelta % 120 - 0) == -0 ? event.wheelDelta / 120 : event.wheelDelta / 100;
-            normalized = normalized > 1 ? normalized / 10 : normalized;
+            normalized = Math.abs(normalized > 1) ? normalized / 100 : normalized;
         } else {
             var rawAmmount = event.deltaY ? event.deltaY : event.detail;
             normalized = -(rawAmmount % 3 ? rawAmmount * 10 : rawAmmount / 3);
